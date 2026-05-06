@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESTION GamesMaster | Gestion des Organisations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --secondary: #fd79a8;
+            --accent: #fdcb6e;
+            --success: #00b894;
+            --danger: #d63031;
+            --dark: #2d3436;
+            --darker: #1e272e;
+            --light: #f5f6fa;
+            --lighter: #dfe6e9;
+            --shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 20px rgba(108, 92, 231, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #1e272e 0%, #2d3436 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* FIX OPTIONS SELECT */
+        select option {
+            background-color: #2d3436 !important;
+            color: #f5f6fa !important;
+            padding: 10px;
+        }
+        select option:checked, select option:hover {
+            background: #6c5ce7 !important;
+            color: white !important;
+        }
+
+        .container { padding: 2rem; max-width: 1800px; margin: 0 auto; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem;
+        }
+        .header h1 {
+            color: var(--primary); font-size: 2.2rem; font-weight: 600;
+            display: flex; align-items: center; gap: 0.8rem; text-shadow: var(--glow);
+        }
+        .header-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+        .btn {
+            padding: 0.7rem 1.5rem; border: none; border-radius: 50px;
+            font-weight: 500; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 0.5rem; transition: all 0.3s ease; font-size: 0.95rem; box-shadow: var(--shadow);
+        }
+        .btn-primary { background: linear-gradient(45deg, var(--primary), #8e44ad); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4); }
+        .btn-outline { background: transparent; color: var(--light); border: 2px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary); }
+        .btn-accent { background: linear-gradient(45deg, var(--accent), #e67e22); color: white; }
+        .btn-accent:hover { transform: translateY(-2px); }
+        .btn-danger { background: linear-gradient(45deg, var(--danger), #c0392b); color: white; }
+        .btn-danger:hover { transform: translateY(-2px); }
+        .btn-success { background: linear-gradient(45deg, var(--success), #00a085); color: white; }
+        .btn-success:hover { transform: translateY(-2px); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        .tabs {
+            display: flex; gap: 0.5rem; margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1); flex-wrap: wrap;
+        }
+        .tab {
+            padding: 0.8rem 1.5rem; cursor: pointer; border-radius: 12px 12px 0 0;
+            transition: all 0.3s; color: var(--lighter); font-weight: 500;
+        }
+        .tab:hover { background: rgba(108, 92, 231, 0.1); color: var(--light); }
+        .tab.active { background: linear-gradient(45deg, var(--primary), #8e44ad); color: white; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;
+            box-shadow: var(--shadow); backdrop-filter: blur(10px);
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+        }
+        .card-title {
+            font-size: 1.3rem; color: var(--primary-light);
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+
+        .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .filters .form-control { max-width: 250px; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; color: var(--lighter); font-size: 0.9rem; }
+        .form-control {
+            width: 100%; padding: 0.8rem 1rem; border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(45, 52, 54, 0.6);
+            color: var(--light); font-size: 0.95rem; transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(45, 52, 54, 0.9);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+        textarea.form-control { min-height: 120px; resize: vertical; }
+
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            border-radius: 12px; overflow: hidden;
+        }
+        th, td { padding: 1rem 1.2rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        th { background: rgba(255, 255, 255, 0.03); color: var(--lighter); font-weight: 500; font-size: 0.9rem; }
+        tr:hover td { background: rgba(108, 92, 231, 0.05); }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.8rem;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .status-actif { background: rgba(0, 184, 148, 0.2); color: var(--success); }
+        .status-inactif { background: rgba(214, 48, 49, 0.2); color: var(--danger); }
+        .status-surveillance { background: rgba(253, 203, 110, 0.2); color: var(--accent); }
+        .status-dissous { background: rgba(149, 165, 166, 0.2); color: var(--lighter); }
+        .status-pending { background: rgba(253, 203, 110, 0.2); color: var(--accent); }
+        .status-approved { background: rgba(0, 184, 148, 0.2); color: var(--success); }
+        .status-rejected { background: rgba(214, 48, 49, 0.2); color: var(--danger); }
+
+        .mission-counter { display: flex; align-items: center; gap: 0.5rem; }
+        .mission-btn {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1); border: none; color: var(--light);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .mission-btn:hover { background: rgba(108, 92, 231, 0.4); }
+        .mission-count { font-weight: 600; min-width: 30px; text-align: center; }
+
+        .notes-container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .note-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 1.2rem; transition: all 0.3s;
+        }
+        .note-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .note-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .note-group { color: var(--primary-light); font-weight: 600; }
+        .note-date { color: var(--lighter); font-size: 0.8rem; }
+        .note-content { color: var(--light); line-height: 1.5; margin-bottom: 0.8rem; }
+        .note-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 1.5rem; text-align: center;
+        }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-light); margin-bottom: 0.3rem; }
+        .stat-label { color: var(--lighter); font-size: 0.9rem; }
+
+        .chart-container { position: relative; height: 350px; margin-top: 1rem; }
+
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: #2d3436;
+            margin: 5% auto; padding: 2rem; border-radius: 20px;
+            max-width: 600px; width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: slideUp 0.3s ease;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-title { color: var(--primary-light); font-size: 1.3rem; }
+        .close { color: var(--lighter); font-size: 1.8rem; cursor: pointer; }
+        .close:hover { color: var(--danger); }
+        .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        .actions-cell { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header { flex-direction: column; align-items: flex-start; }
+            .tabs { flex-direction: column; }
+            .notes-container { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            th, td { padding: 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-crown"></i> GESTION GamesMaster</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal('addGroup')">
+                    <i class="fas fa-plus"></i> Nouveau Groupe
+                </button>
+                <button class="btn btn-outline" onclick="switchTab('stats', event)">
+                    <i class="fas fa-chart-line"></i> Statistiques
+                </button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('groups', event)">Groupes</div>
+            <div class="tab" onclick="switchTab('notes', event)">Notes</div>
+            <div class="tab" onclick="switchTab('gives', event)">Demandes</div>
+            <div class="tab" onclick="switchTab('missions', event)">Missions</div>
+            <div class="tab" onclick="switchTab('stats', event)">Statistiques</div>
+        </div>
+
+        <!-- Groupes -->
+        <div id="groups-tab">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-users"></i> Liste des Groupes</div>
+                </div>
+                <div class="filters">
+                    <input type="text" id="search-groups" class="form-control" placeholder="🔍 Rechercher..." oninput="renderGroups()">
+                    <select id="type-filter" class="form-control" onchange="renderGroups()">
+                        <option value="">Tous les types</option>
+                        <option value="orga">Orga</option>
+                        <option value="gang">Gang</option>
+                        <option value="pf-offi">PF Offi</option>
+                        <option value="pf-inde">PF Inde</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Type</th>
+                                <th>Statut</th>
+                                <th>Or</th>
+                                <th>Missions</th>
+                                <th>Lieux</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groups-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div id="notes-tab" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-sticky-note"></i> Notes des Groupes</div>
+                    <button class="btn btn-primary" onclick="openModal('addNote')">
+                        <i class="fas fa-plus"></i> Ajouter une Note
+                    </button>
+                </div>
+                <div class="notes-container" id="notes-container"></div>
+            </div>
+        </div>
+
+        <!-- Gives -->
+        <div id="gives-tab" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-gift"></i> Demandes de Give</div>
+                    <button class="btn btn-accent" onclick="openModal('addGive')">
+                        <i class="fas fa-plus"></i> Nouvelle Demande
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Groupe</th>
+                                <th>Montant</th>
+                                <th>Raison</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gives-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Missions -->
+        <div id="missions-tab" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-trophy"></i> Suivi des Missions</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-missions">0</div>
+                        <div class="stat-label">Missions Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="top-group">-</div>
+                        <div class="stat-label">Groupe le plus actif</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-missions">0</div>
+                        <div class="stat-label">Moyenne par groupe</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="missionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats-tab" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-chart-pie"></i> Statistiques Générales</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-groups">0</div>
+                        <div class="stat-label">Total Groupes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-gold">0</div>
+                        <div class="stat-label">Or Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-notes">0</div>
+                        <div class="stat-label">Total Notes</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Group -->
+    <div id="addGroup" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nouveau Groupe</h2>
+                <span class="close" onclick="closeModal('addGroup')">&times;</span>
+            </div>
+            <form id="addGroupForm">
+                <div class="form-group">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" id="group-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="group-type" class="form-control">
+                        <option value="">Sélectionner un type (optionnel)</option>
+                        <option value="orga">Orga</option>
+                        <option value="gang">Gang</option>
+                        <option value="pf-offi">PF Offi</option>
+                        <option value="pf-inde">PF Inde</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Statut</label>
+                    <select id="group-status" class="form-control">
+                        <option value="actif">Actif</option>
+                        <option value="inactif">Inactif</option>
+                        <option value="surveillance">Surveillance</option>
+                        <option value="dissous">Dissous</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Or</label>
+                    <input type="number" id="group-gold" class="form-control" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Missions</label>
+                    <div class="mission-counter">
+                        <button type="button" class="mission-btn" onclick="decrementMission('add')"><i class="fas fa-minus"></i></button>
+                        <span class="mission-count" id="add-mission-count">0</span>
+                        <button type="button" class="mission-btn" onclick="incrementMission('add')"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lieux (séparés par virgule)</label>
+                    <input type="text" id="group-locations" class="form-control" placeholder="Ex: Paris, Lyon">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('addGroup')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Group -->
+    <div id="editGroup" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Modifier le Groupe</h2>
+                <span class="close" onclick="closeModal('editGroup')">&times;</span>
+            </div>
+            <form id="editGroupForm">
+                <input type="hidden" id="edit-group-id">
+                <div class="form-group">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" id="edit-group-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="edit-group-type" class="form-control">
+                        <option value="">Sélectionner un type</option>
+                        <option value="orga">Orga</option>
+                        <option value="gang">Gang</option>
+                        <option value="pf-offi">PF Offi</option>
+                        <option value="pf-inde">PF Inde</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Statut</label>
+                    <select id="edit-group-status" class="form-control">
+                        <option value="actif">Actif</option>
+                        <option value="inactif">Inactif</option>
+                        <option value="surveillance">Surveillance</option>
+                        <option value="dissous">Dissous</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Or</label>
+                    <input type="number" id="edit-group-gold" class="form-control" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Missions</label>
+                    <div class="mission-counter">
+                        <button type="button" class="mission-btn" onclick="decrementMission('edit')"><i class="fas fa-minus"></i></button>
+                        <span class="mission-count" id="edit-mission-count">0</span>
+                        <button type="button" class="mission-btn" onclick="incrementMission('edit')"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lieux</label>
+                    <input type="text" id="edit-group-locations" class="form-control">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('editGroup')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Note -->
+    <div id="addNote" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nouvelle Note</h2>
+                <span class="close" onclick="closeModal('addNote')">&times;</span>
+            </div>
+            <form id="addNoteForm">
+                <div class="form-group">
+                    <label class="form-label">Groupe *</label>
+                    <select id="note-group" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contenu *</label>
+                    <textarea id="note-content" class="form-control" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('addNote')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Give -->
+    <div id="addGive" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nouvelle Demande de Give</h2>
+                <span class="close" onclick="closeModal('addGive')">&times;</span>
+            </div>
+            <form id="addGiveForm">
+                <div class="form-group">
+                    <label class="form-label">Groupe</label>
+                    <select id="give-group" class="form-control">
+                        <option value="">Sélectionner un groupe (optionnel)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Montant</label>
+                    <input type="number" id="give-amount" class="form-control" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Raison</label>
+                    <textarea id="give-reason" class="form-control" placeholder="Détails..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('addGive')">Annuler</button>
+                    <button type="submit" class="btn btn-accent">Envoyer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        let groups = JSON.parse(localStorage.getItem('gm_groups') || '[]');
+        let notes = JSON.parse(localStorage.getItem('gm_notes') || '[]');
+        let gives = JSON.parse(localStorage.getItem('gm_gives') || '[]');
+
+        function saveData() {
+            localStorage.setItem('gm_groups', JSON.stringify(groups));
+            localStorage.setItem('gm_notes', JSON.stringify(notes));
+            localStorage.setItem('gm_gives', JSON.stringify(gives));
+        }
+
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+        // Tabs
+        function switchTab(tab, event) {
+            document.querySelectorAll('[id$="-tab"]').forEach(t => t.style.display = 'none');
+            document.getElementById(tab + '-tab').style.display = 'block';
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            if (tab === 'groups') renderGroups();
+            if (tab === 'notes') renderNotes();
+            if (tab === 'gives') renderGives();
+            if (tab === 'missions') updateMissionStats();
+            if (tab === 'stats') renderStats();
+        }
+
+        // Modal
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            if (id === 'addGroup') {
+                document.getElementById('addGroupForm').reset();
+                document.getElementById('add-mission-count').textContent = '0';
+            }
+            if (id === 'addNote') {
+                document.getElementById('addNoteForm').reset();
+                fillGroupSelect('note-group');
+            }
+            if (id === 'addGive') {
+                document.getElementById('addGiveForm').reset();
+                fillGroupSelect('give-group', true);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function fillGroupSelect(selectId, optional = false) {
+            const sel = document.getElementById(selectId);
+            sel.innerHTML = optional ? '<option value="">Sélectionner un groupe (optionnel)</option>' : '<option value="">Sélectionner un groupe</option>';
+            groups.forEach(g => {
+                sel.innerHTML += `<option value="${g.id}">${g.name}</option>`;
+            });
+        }
+
+        // Mission counter
+        function incrementMission(type) {
+            const el = document.getElementById(`${type}-mission-count`);
+            el.textContent = parseInt(el.textContent) + 1;
+        }
+        function decrementMission(type) {
+            const el = document.getElementById(`${type}-mission-count`);
+            let c = parseInt(el.textContent);
+            if (c > 0) el.textContent = c - 1;
+        }
+
+        // Groups
+        function renderGroups() {
+            const tbody = document.getElementById('groups-table-body');
+            const search = document.getElementById('search-groups').value.toLowerCase();
+            const filter = document.getElementById('type-filter').value;
+
+            const filtered = groups.filter(g => {
+                const matchS = g.name.toLowerCase().includes(search) || (g.locations || []).join(',').toLowerCase().includes(search);
+                const matchT = filter ? g.type === filter : true;
+                return matchS && matchT;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--lighter);">Aucun groupe trouvé</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(g => `
+                <tr>
+                    <td><strong>${escapeHtml(g.name)}</strong></td>
+                    <td>${getTypeLabel(g.type)}</td>
+                    <td><span class="status-badge status-${g.status || 'actif'}">${getStatusLabel(g.status)}</span></td>
+                    <td>${(g.gold || 0).toLocaleString()}</td>
+                    <td>${g.missions || 0}</td>
+                    <td>${(g.locations || []).join(', ') || '-'}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-sm btn-outline" onclick="openEditGroup('${g.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteGroup('${g.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addGroup(e) {
+            e.preventDefault();
+            const newGroup = {
+                id: uid(),
+                name: document.getElementById('group-name').value.trim(),
+                type: document.getElementById('group-type').value,
+                status: document.getElementById('group-status').value,
+                gold: parseInt(document.getElementById('group-gold').value) || 0,
+                missions: parseInt(document.getElementById('add-mission-count').textContent) || 0,
+                locations: document.getElementById('group-locations').value.split(',').map(s => s.trim()).filter(Boolean),
+                created: new Date().toISOString()
+            };
+            groups.push(newGroup);
+            saveData();
+            closeModal('addGroup');
+            renderGroups();
+            showNotification('Groupe ajouté !');
+        }
+
+        function openEditGroup(id) {
+            const g = groups.find(x => x.id === id);
+            if (!g) return;
+            document.getElementById('edit-group-id').value = g.id;
+            document.getElementById('edit-group-name').value = g.name;
+            document.getElementById('edit-group-type').value = g.type || '';
+            document.getElementById('edit-group-status').value = g.status || 'actif';
+            document.getElementById('edit-group-gold').value = g.gold || 0;
+            document.getElementById('edit-mission-count').textContent = g.missions || 0;
+            document.getElementById('edit-group-locations').value = (g.locations || []).join(', ');
+            openModal('editGroup');
+        }
+
+        function editGroup(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-group-id').value;
+            const idx = groups.findIndex(g => g.id === id);
+            if (idx === -1) return;
+            groups[idx] = {
+                ...groups[idx],
+                name: document.getElementById('edit-group-name').value.trim(),
+                type: document.getElementById('edit-group-type').value,
+                status: document.getElementById('edit-group-status').value,
+                gold: parseInt(document.getElementById('edit-group-gold').value) || 0,
+                missions: parseInt(document.getElementById('edit-mission-count').textContent) || 0,
+                locations: document.getElementById('edit-group-locations').value.split(',').map(s => s.trim()).filter(Boolean)
+            };
+            saveData();
+            closeModal('editGroup');
+            renderGroups();
+            showNotification('Groupe modifié !');
+        }
+
+        function deleteGroup(id) {
+            if (!confirm('Supprimer ce groupe et toutes ses notes ?')) return;
+            groups = groups.filter(g => g.id !== id);
+            notes = notes.filter(n => n.groupId !== id);
+            saveData();
+            renderGroups();
+            showNotification('Groupe supprimé !');
+        }
+
+        // Notes
+        function renderNotes() {
+            const c = document.getElementById('notes-container');
+            if (notes.length === 0) {
+                c.innerHTML = `<p style="color:var(--lighter);text-align:center;grid-column:1/-1;">Aucune note</p>`;
+                return;
+            }
+            c.innerHTML = notes.map(n => {
+                const g = groups.find(x => x.id === n.groupId);
+                return `
+                    <div class="note-card">
+                        <div class="note-header">
+                            <span class="note-group">${g ? escapeHtml(g.name) : 'Groupe supprimé'}</span>
+                            <span class="note-date">${new Date(n.date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="note-content">${escapeHtml(n.content)}</div>
+                        <div class="note-actions">
+                            <button class="btn btn-sm btn-danger" onclick="deleteNote('${n.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addNote(e) {
+            e.preventDefault();
+            notes.push({
+                id: uid(),
+                groupId: document.getElementById('note-group').value,
+                content: document.getElementById('note-content').value.trim(),
+                date: new Date().toISOString()
+            });
+            saveData();
+            closeModal('addNote');
+            renderNotes();
+            showNotification('Note ajoutée !');
+        }
+
+        function deleteNote(id) {
+            if (!confirm('Supprimer cette note ?')) return;
+            notes = notes.filter(n => n.id !== id);
+            saveData();
+            renderNotes();
+        }
+
+        // Gives
+        function renderGives() {
+            const tbody = document.getElementById('gives-table-body');
+            if (gives.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--lighter);">Aucune demande</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = gives.map(give => {
+                const g = groups.find(x => x.id === give.groupId);
+                const badge = give.status === 'approved'
+                    ? '<span class="status-badge status-approved"><i class="fas fa-check"></i> Approuvé</span>'
+                    : give.status === 'rejected'
+                    ? '<span class="status-badge status-rejected"><i class="fas fa-times"></i> Rejeté</span>'
+                    : '<span class="status-badge status-pending"><i class="fas fa-clock"></i> En attente</span>';
+                return `
+                    <tr>
+                        <td>${g ? escapeHtml(g.name) : '-'}</td>
+                        <td>${(give.amount || 0).toLocaleString()}</td>
+                        <td>${escapeHtml(give.reason || '-')}</td>
+                        <td>${badge}</td>
+                        <td>${new Date(give.date).toLocaleDateString()}</td>
+                        <td class="actions-cell">
+                            ${give.status === 'pending' ? `
+                                <button class="btn btn-sm btn-success" onclick="approveGive('${give.id}')"><i class="fas fa-check"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectGive('${give.id}')"><i class="fas fa-times"></i></button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline" onclick="deleteGive('${give.id}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function addGive(e) {
+            e.preventDefault();
+            gives.push({
+                id: uid(),
+                groupId: document.getElementById('give-group').value,
+                amount: parseInt(document.getElementById('give-amount').value) || 0,
+                reason: document.getElementById('give-reason').value.trim(),
+                status: 'pending',
+                date: new Date().toISOString()
+            });
+            saveData();
+            closeModal('addGive');
+            renderGives();
+            showNotification('Demande envoyée !');
+        }
+
+        function approveGive(id) {
+            const i = gives.findIndex(g => g.id === id);
+            if (i !== -1) { gives[i].status = 'approved'; saveData(); renderGives(); showNotification('Approuvé !'); }
+        }
+        function rejectGive(id) {
+            const i = gives.findIndex(g => g.id === id);
+            if (i !== -1) { gives[i].status = 'rejected'; saveData(); renderGives(); showNotification('Rejeté !'); }
+        }
+        function deleteGive(id) {
+            if (!confirm('Supprimer cette demande ?')) return;
+            gives = gives.filter(g => g.id !== id);
+            saveData();
+            renderGives();
+        }
+
+        // Stats
+        function renderStats() {
+            document.getElementById('total-groups').textContent = groups.length;
+            document.getElementById('total-gold').textContent = groups.reduce((s, g) => s + (g.gold || 0), 0).toLocaleString();
+            document.getElementById('total-notes').textContent = notes.length;
+
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            if (window.typeChart instanceof Chart) window.typeChart.destroy();
+
+            window.typeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Orga', 'Gang', 'PF Offi', 'PF Inde', 'Non spécifié'],
+                    datasets: [{
+                        data: [
+                            groups.filter(g => g.type === 'orga').length,
+                            groups.filter(g => g.type === 'gang').length,
+                            groups.filter(g => g.type === 'pf-offi').length,
+                            groups.filter(g => g.type === 'pf-inde').length,
+                            groups.filter(g => !g.type).length
+                        ],
+                        backgroundColor: ['#6c5ce7', '#fd79a8', '#78dbff', '#fdcb6e', '#95a5a6']
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#dfe6e9' } } }
+                }
+            });
+        }
+
+        function updateMissionStats() {
+            const total = groups.reduce((s, g) => s + (g.missions || 0), 0);
+            document.getElementById('total-missions').textContent = total;
+            document.getElementById('avg-missions').textContent = groups.length ? (total / groups.length).toFixed(1) : 0;
+            const top = [...groups].sort((a, b) => (b.missions || 0) - (a.missions || 0))[0];
+            document.getElementById('top-group').textContent = top ? top.name : '-';
+
+            const ctx = document.getElementById('missionsChart').getContext('2d');
+            if (window.missionsChart instanceof Chart) window.missionsChart.destroy();
+
+            const sorted = [...groups].sort((a, b) => (b.missions || 0) - (a.missions || 0)).slice(0, 10);
+            window.missionsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(g => g.name),
+                    datasets: [{
+                        label: 'Missions',
+                        data: sorted.map(g => g.missions || 0),
+                        backgroundColor: 'rgba(108, 92, 231, 0.7)',
+                        borderColor: 'rgba(108, 92, 231, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#dfe6e9' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        y: { ticks: { color: '#dfe6e9' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+
+        // Utils
+        function getTypeLabel(t) {
+            return { orga: 'Orga', gang: 'Gang', 'pf-offi': 'PF Offi', 'pf-inde': 'PF Inde' }[t] || 'Non spécifié';
+        }
+        function getStatusLabel(s) {
+            return { actif: 'Actif', inactif: 'Inactif', surveillance: 'Surveillance', dissous: 'Dissous' }[s] || 'Actif';
+        }
+        function escapeHtml(s) {
+            return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showNotification(msg) {
+            const n = document.createElement('div');
+            n.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:50px;background:linear-gradient(45deg,#6c5ce7,#fd79a8);color:white;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:2000;display:flex;align-items:center;gap:10px;animation:fadeIn 0.3s;';
+            n.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => { n.style.animation = 'fadeOut 0.3s'; setTimeout(() => n.remove(), 300); }, 2500);
+        }
+
+        // Listeners
+        document.getElementById('addGroupForm').addEventListener('submit', addGroup);
+        document.getElementById('editGroupForm').addEventListener('submit', editGroup);
+        document.getElementById('addNoteForm').addEventListener('submit', addNote);
+        document.getElementById('addGiveForm').addEventListener('submit', addGive);
+
+        window.onclick = function(e) {
+            document.querySelectorAll('.modal').forEach(m => {
+                if (e.target === m) closeModal(m.id);
+            });
+        };
+
+        // Init
+        renderGroups();
+    </script>
+</body>
+</html>
