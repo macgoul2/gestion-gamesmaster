@@ -7,6 +7,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCS8cTa4npNrDtXr-3w2RJMIZ88ptObVRE",
+    authDomain: "gestion-gm-dd0a7.firebaseapp.com",
+    projectId: "gestion-gm-dd0a7",
+    storageBucket: "gestion-gm-dd0a7.firebasestorage.app",
+    messagingSenderId: "744119175180",
+    appId: "1:744119175180:web:c464a4469c773c4b188629"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.fbDocRef = doc(db, "gamesmaster", "data");
+  window.fbSetDoc = setDoc;
+  window.fbOnSnapshot = onSnapshot;
+  window.fbReady = true;
+</script>
 <style>
 :root{--primary:#6c5ce7;--primary-light:#a29bfe;--secondary:#fd79a8;--accent:#fdcb6e;--success:#00b894;--danger:#d63031;--blue-gold:#78dbff;--dark:#2d3436;--darker:#1e272e;--light:#f5f6fa;--lighter:#b2bec3;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
@@ -399,7 +417,14 @@ function save(){
   localStorage.setItem('gm_notes', JSON.stringify(notes));
   localStorage.setItem('gm_gives', JSON.stringify(gives));
   localStorage.setItem('gm_revs',  JSON.stringify(revs));
+  if(!window.fbReady)return;
+  clearTimeout(window._sT);
+  window._sT=setTimeout(function(){
+    window.fbSetDoc(window.fbDocRef,{groups:groups,notes:notes,gives:gives,revs:revs,t:Date.now()})
+      .catch(function(e){console.error(e);notify('Erreur synchro','error');});
+  },300);
 }
+
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function isPF(t){return t==='pf-offi'||t==='pf-inde';}
 function tLabel(t){return{'orga':'Orga','gang':'Gang','pf-offi':'PF Offi','pf-inde':'PF Inde'}[t]||'Inconnu';}
@@ -744,6 +769,30 @@ function deleteRev(id){
 
 load();
 renderGroups();
+var _fbInit=false;
+function _initFb(){
+  if(!window.fbReady){setTimeout(_initFb,200);return;}
+  window.fbOnSnapshot(window.fbDocRef,function(snap){
+    if(snap.exists()){
+      var d=snap.data();
+      groups=d.groups||[];notes=d.notes||[];gives=d.gives||[];revs=d.revs||[];
+      localStorage.setItem('gm_groups',JSON.stringify(groups));
+      localStorage.setItem('gm_notes',JSON.stringify(notes));
+      localStorage.setItem('gm_gives',JSON.stringify(gives));
+      localStorage.setItem('gm_revs',JSON.stringify(revs));
+      var tabs=['groups','notes','gives','missions','stats','revs'];
+      var activeIdx=Array.from(document.querySelectorAll('.tab')).findIndex(function(t){return t.classList.contains('active');});
+      if(activeIdx>=0)showTab(tabs[activeIdx]);
+      if(_fbInit)notify('🔄 Mise à jour reçue');
+      _fbInit=true;
+    }else{
+      window.fbSetDoc(window.fbDocRef,{groups:groups,notes:notes,gives:gives,revs:revs,t:Date.now()});
+      _fbInit=true;
+    }
+  },function(err){console.error(err);notify('Erreur Firebase','error');});
+}
+_initFb();
+
 </script>
 </body>
 </html>
